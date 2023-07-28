@@ -3,7 +3,7 @@
     hosts: localhost
     connection: local 
     tasks:
-    - name: "Include server variables"
+    - name: "Include server variables to server"
       include_vars: server_vars.yml
     - name: Install Apache
       yum:
