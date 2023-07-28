@@ -1,5 +1,5 @@
 ---
-  - name: "Setup and install software for app server"
+  - name: "App setup and install software"
     hosts: localhost
     connection: local 
     tasks:
