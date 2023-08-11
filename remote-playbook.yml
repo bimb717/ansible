@@ -1,0 +1,84 @@
+---
+- hosts: app
+  become: true
+  gather_facts: yes
+  tasks:
+  - name: App install Apache
+    yum:
+      name: httpd
+      state: present
+  - name: App server ensure a service unit is running
+    ansible.builtin.systemd:
+      state: started
+      name: httpd
+  - name: App server service httpd is enabled
+    ansible.builtin.systemd:
+      name: httpd
+      enabled: true
+- hosts: web
+  become: true
+  gather_facts: yes
+  tasks:
+  - name: Web server install nginx
+    yum:
+      name: nginx
+      state: present
+  - name: Web server ensure service unit is running
+    ansible.builtin.systemd:
+      state: started
+      name: nginx
+  - name: Web server enable service nginx
+    ansible.builtin.systemd:
+      name: nginx
+      enabled: true
+- hosts: encrypted_servers
+  become: true
+  gather_facts: yes
+
+  tasks:
+    - name: Remove default nginx config
+      file: name=/etc/nginx/sites-enabled/default state=absent
+
+    - name: Install system nginx config
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+
+    - name: Create ssl directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /etc/ssl/certs
+        - /etc/ssl/private
+
+    - name: Generate self-signed ssl
+      shell: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=yourdomain.com"
+      args:
+        creates: /etc/ssl/certs/nginx-selfsigned.crt
+
+    - name: Generate dhparams
+      shell: openssl dhparam -dsaparam -out /etc/nginx/dhparams.pem 2048
+      args:
+        creates: /etc/nginx/dhparams.pem
+
+    - name: Create nginx directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /etc/nginx/sites-enabled
+        - /var/www/{{ hostvars['encrypted_server'].domain_name }}
+
+    - name: Create index.html
+      template:
+        src: templates/index.html
+        dest: /var/www/{{ hostvars['encrypted_server'].domain_name }}/index.html
+
+    - name: Install nginx config for encrypted site
+      template:
+        src: templates/nginx-encrypted.j2
+        dest: /etc/nginx/sites-enabled/encrypted
+
+    - name: Reload nginx
+      service: name=nginx state=restarted
