@@ -1,0 +1,9 @@
+#example inventory file. leaving IP addresses and hostname for reference
+[app]
+3.235.178.156
+
+[web]
+54.82.20.161
+
+[encrypted_servers]
+encrypted_server ansible_host=54.82.20.161 domain_name=ip-172-31-22-169.ec2.internal
