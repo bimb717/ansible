@@ -2,9 +2,12 @@
 - hosts: localhost
   connection: local
   become: true
-  include_vars: server_vars.yml
-  roles:
-    - httpd
-      when: metadata_server_type == "app"
-    - nginx
-      when: metadata_server_type == "web"
+  tasks:
+  - name: "Include server variables to server"
+    include_vars: server_vars.yml
+  - include_role:
+      name: httpd
+    when: metadata_server_type == "app"
+  - include_role:
+      name: nginx
+    when: metadata_server_type == "web"
