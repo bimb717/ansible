@@ -1,0 +1,13 @@
+---
+- name: App install Apache
+  yum:
+    name: httpd
+    state: present
+- name: App server ensure a service unit is running
+  ansible.builtin.systemd:
+    state: started
+    name: httpd
+- name: App server service httpd is enabled
+  ansible.builtin.systemd:
+    name: httpd
+    enabled: true
